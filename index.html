@@ -15,6 +15,7 @@
 <title>My Day</title>
 <meta name="description" content="My Day — your daily intention, habits, tasks, wins, prayers, and scripture in one place.">
 <link rel="manifest" href="./manifest.json">
+<link rel="icon" type="image/png" href="./MyDay_Icon_Transparent.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1963,7 +1964,7 @@ function scheduleAllNotifications(){if(typeof Notification==='undefined'||Notifi
 function fireNotification(title,body){
   if(typeof Notification==='undefined'||Notification.permission!=='granted')return;
   try{
-    if(swReg && swReg.active) swReg.showNotification(title,{body,icon:'./icon.png',vibrate:[200,100,200]});
+    if(swReg && swReg.active) swReg.showNotification(title,{body,icon:'./MyDay_Icon_Transparent.png',vibrate:[200,100,200]});
     else new Notification(title,{body});
   }catch(e){try{new Notification(title,{body});}catch(e2){}}
   if(getAlarmSound())playAlarmChime();
@@ -1992,6 +1993,25 @@ function openMyCalendar(){
 }
 /* Legacy calendar storage cleanup */
 (function(){try{['sc_cal_v2','sc_gcal_cfg_v2','sc_gcal_token_v2','sc_gcal_token_expiry_v2'].forEach(k=>localStorage.removeItem(k));}catch(e){}})();
+const K_JARVIS_SEEN='sc_jarvis_seen_v1';
+async function pullJarvisInbox(){
+  try{
+    const res=await fetch('./jarvis.json',{cache:'no-store'});
+    if(!res.ok)return;
+    const data=await res.json();
+    const items=(data&&Array.isArray(data.tasks))?data.tasks:[];
+    if(!items.length)return;
+    let seen=[];try{seen=JSON.parse(localStorage.getItem(K_JARVIS_SEEN)||'[]');}catch(e){}
+    let added=0;
+    items.forEach(it=>{
+      if(!it||typeof it.id!=='number'||!it.text)return;
+      if(seen.includes(it.id)||tasks.some(t=>t.id===it.id))return;
+      tasks.unshift({id:it.id,text:String(it.text).slice(0,200),completed:false,createdAt:new Date().toISOString(),deadline:it.deadline||null,priority:'',pinned:false,notes:''});
+      seen.push(it.id);added++;
+    });
+    if(added){localStorage.setItem(K_JARVIS_SEEN,JSON.stringify(seen));save();renderAll();showToast(added===1?'Jarvis added a task':'Jarvis added '+added+' tasks');}
+  }catch(e){}
+}
 function init(){
   load();updateStreak();checkReset();updateHeader();updateFlipClock();
   let _lastClockMin=-1;function clockTick(){const now=new Date(),m=now.getMinutes();if(m!==_lastClockMin){updateFlipClock();updateHeader();_lastClockMin=m;}const msUntilNextMin=(60-now.getSeconds())*1000-now.getMilliseconds()+50;setTimeout(clockTick,Math.min(Math.max(msUntilNextMin,500),61000));}clockTick();
@@ -1999,6 +2019,7 @@ function init(){
   renderPrayers();checkIntentionPopup();initSettings();injectRecurring();renderAll();setTimeout(()=>{const _fs=loadSettings();if(!_fs.name||!_fs.name.trim()){showView('settings');showToast('Welcome! Add your name at the top of Settings.');}},600);
   if(typeof Notification!=='undefined'&&Notification.permission==='granted'){registerServiceWorker().then(()=>{ scheduleAllNotifications(); schedule5amSW(); });}
   updateNotifStatus();autoPruneData();
+  pullJarvisInbox();
   const _ti=el('taskInput');if(_ti)_ti.addEventListener('keydown',e=>{if(e.key==='Enter')addTask();});
   const _pi=el('prayerInput');if(_pi)_pi.addEventListener('keydown',e=>{if(e.key==='Enter')addPrayer();});
 }
@@ -2286,7 +2307,7 @@ function renderSearch(q){
   const tMatches=tasks.filter(t=>t.text.toLowerCase().includes(q));
   if(tMatches.length){
     html+=`<div class="search-type-label">Tasks</div>`;
-    html+=tMatches.map(t=>`<div class="search-item" onclick="closeSearch();showView('main');setTimeout(()=>{const e=document.querySelector('[data-tid=\\"${t.id}\\"]');if(e)e.scrollIntoView({behavior:'smooth',block:'center'});},300)">
+    html+=tMatches.map(t=>`<div class="search-item" onclick="closeSearch();showView('today');setTimeout(()=>{const e=document.querySelector('[data-tid=\\"${t.id}\\"]');if(e)e.scrollIntoView({behavior:'smooth',block:'center'});},300)">
       <div class="search-item-text">${_highlight(t.text,q)}</div>
       <div class="search-item-sub">${t.completed?'✓ Completed':'Pending'}${t.priority?' · '+priLabel(t.priority):''}${t.pinned?' · 📌 Pinned':''}</div>
     </div>`).join('');
@@ -2306,7 +2327,7 @@ function renderSearch(q){
   const prMatches=prayers.filter(p=>(p.text||'').toLowerCase().includes(q));
   if(prMatches.length){
     html+=`<div class="search-type-label">Prayers</div>`;
-    html+=prMatches.slice(0,10).map(p=>`<div class="search-item" onclick="closeSearch();showView('prayer')">
+    html+=prMatches.slice(0,10).map(p=>`<div class="search-item" onclick="closeSearch();showView('spiritual')">
       <div class="search-item-text">${_highlight(p.text||'',q)}</div>
       <div class="search-item-sub">${p.answered?'✓ Answered':'Believing'} · ${new Date(p.dateAdded).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div>
     </div>`).join('');
@@ -2358,7 +2379,7 @@ function scheduleDailyReminderNotif(timeStr){
     let body='You have '+pending.length+' task'+(pending.length!==1?'s':'')+' today.';
     if(pinned.length)body='📌 '+pinned[0].text+(pending.length>1?' + '+(pending.length-1)+' more':'');
     else if(high.length)body='🔴 '+high[0].text+(pending.length>1?' + '+(pending.length-1)+' more':'');
-    try{new Notification('My Day — Good Morning! ☀️',{body,icon:'/favicon.ico'});}catch(e){}
+    try{new Notification('My Day — Good Morning! ☀️',{body,icon:'./MyDay_Icon_Transparent.png'});}catch(e){}
     // Reschedule for tomorrow
     _reminderTimer=setTimeout(()=>scheduleDailyReminderNotif(timeStr),1000);
   },ms);

@@ -1,0 +1,18 @@
+{
+  "name": "My Day",
+  "short_name": "My Day",
+  "description": "Your daily intention, habits, tasks, and wins.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "./MyDay_Icon_Transparent.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
