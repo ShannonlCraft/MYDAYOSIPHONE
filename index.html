@@ -291,9 +291,9 @@ body{font-family:'Manrope',-apple-system,sans-serif;background:var(--bg);color:v
 .study-chip-sub{display:block;font-size:10px;font-weight:600;opacity:0.75;margin-top:2px;}
 .study-toggle{flex:1;background:var(--g2);color:var(--l2);border:1px solid var(--sep2);border-radius:var(--r-sm);padding:12px 8px;font-size:12px;font-weight:800;font-family:'Manrope',sans-serif;cursor:pointer;}
 .study-toggle.on{background:var(--orange);border-color:var(--orange);color:#fff;}
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:500;align-items:flex-end;backdrop-filter:blur(8px);}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:500;align-items:flex-end;backdrop-filter:blur(8px);padding-top:calc(env(safe-area-inset-top,0px) + 14px);box-sizing:border-box;}
 .modal-overlay.open{display:flex;}
-.modal-sheet{background:var(--g1);border-radius:24px 24px 0 0;width:100%;max-height:92vh;overflow-y:auto;}
+.modal-sheet{background:var(--g1);border-radius:24px 24px 0 0;width:100%;max-height:calc(92vh - env(safe-area-inset-top,0px) - 14px);overflow-y:auto;}
 .modal-inner{padding:20px 20px 48px;}
 .modal-handle{width:36px;height:4px;background:var(--g3);border-radius:2px;margin:0 auto 22px;}
 .modal-eyebrow{font-size:10px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--orange);margin-bottom:6px;display:flex;align-items:center;gap:6px;}
@@ -2253,5 +2253,13 @@ document.addEventListener('DOMContentLoaded',initDailyReminder);
   <svg class="fab-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
 </button>
 
+
+<script>
+(function(){
+  function resetSheet(ov){ var sh=ov.querySelector('.modal-sheet'); if(!sh) return; sh.scrollTop=0; requestAnimationFrame(function(){ sh.scrollTop=0; }); }
+  var mo=new MutationObserver(function(muts){ for(var i=0;i<muts.length;i++){ var t=muts[i].target; if(t.classList && t.classList.contains('modal-overlay') && t.classList.contains('open')) resetSheet(t); } });
+  document.querySelectorAll('.modal-overlay').forEach(function(ov){ mo.observe(ov,{attributes:true,attributeFilter:['class']}); });
+})();
+</script>
 </body>
 </html>
