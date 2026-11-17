@@ -1,5 +1,5 @@
 /* My Day service worker */
-const CACHE_NAME = "myday-v5";
+const CACHE_NAME = "myday-v6";
 const ASSETS = ["./", "./index.html", "./manifest.json", "./MyDay_Icon_Transparent.png"];
 
 self.addEventListener("install", event => {
@@ -19,7 +19,7 @@ self.addEventListener("fetch", event => {
   const isPage = req.mode === "navigate" || (req.headers.get("accept") || "").includes("text/html");
   if (isPage) {
     event.respondWith(
-      fetch(req)
+      fetch(req, { cache: 'no-store' })
         .then(res => {
           const copy = res.clone();
           caches.open(CACHE_NAME).then(cache => cache.put("./index.html", copy));
