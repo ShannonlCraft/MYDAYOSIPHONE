@@ -1,5 +1,5 @@
 /* My Day service worker */
-const CACHE_NAME = "myday-v6";
+const CACHE_NAME = "myday-v7";
 const ASSETS = ["./", "./index.html", "./manifest.json", "./MyDay_Icon_Transparent.png"];
 
 self.addEventListener("install", event => {
